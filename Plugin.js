@@ -3,18 +3,21 @@
 class ExtractFilePlugin {
 
     apply(compiler) {
+        const pluginName = 'ExtractFilePlugin';
 
-        compiler.plugin('this-compilation', (compilation) => {
+        compiler.hooks.thisCompilation.tap(pluginName, compilation => {
 
-            compilation.plugin('normal-module-loader', (loaderContext, module) => {
+            compilation.hooks.normalModuleLoader.tap(pluginName, (loaderContext, module) => {
                 loaderContext[__dirname] = () => {
-                    module.meta[__dirname] = true;
+                    module.buildMeta[__dirname] = true;
                 };
             });
 
-            compilation.plugin('additional-assets', callback => {
+            compilation.hooks.additionalAssets.tapAsync(pluginName, callback => {
                 compilation.chunks.forEach(chunk => {
-                    chunk.forEachModule(module => processModule(chunk, module));
+                    for(const module of chunk.modulesIterable) {
+                        processModule(chunk, module);
+                    }
                 });
 
                 callback();
@@ -25,20 +28,19 @@ class ExtractFilePlugin {
 
 function processModule(chunk, ourModule) {
 
-    if (ourModule.meta && ourModule.meta[__dirname]) {
+    if (ourModule.buildMeta && ourModule.buildMeta[__dirname]) {
 
         let moduleFound = false;
 
         // let's find module, which was issued by ours (proxied module)
-        chunk.forEachModule((module) => {
-
+        for(const module of chunk.modulesIterable) {
             if (!moduleFound && module.reasons.some(reason => reason.module === ourModule)) {
                 // add assets from that module
                 addAssets(chunk, module);
                 // break cycle
                 moduleFound = true;
             }
-        });
+        };
     }
 }
 
