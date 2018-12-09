@@ -12,7 +12,7 @@ so it's available in generated manifest
 # Install
 
 ```bash
-# for webpack 3
+# for webpack 3, 4
 npm install --save-dev extract-text-webpack-plugin
 # for webpack 1, 2
 npm install --save-dev extract-text-webpack-plugin@0.1.0
